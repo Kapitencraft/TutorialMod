@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -24,17 +25,17 @@ public class BackpackItem extends Item {
     public InteractionResultHolder<ItemStack> use(Level level, Player p, InteractionHand hand) {
         ItemStack stack = p.getItemInHand(hand);
         if (!level.isClientSide()) {
-            MenuProvider provider  = new MenuProvider() {
-                @Override
-                public Component getDisplayName() {
-                    return stack.getHoverName();
-                }
-
-                @Override
-                public @Nullable AbstractContainerMenu createMenu(int i, Inventory inventory, Player player) {
-                    return ChestMenu.threeRows(i, inventory, stack.getOrDefault(ModDataComponentTypes.BACKPACK, new Backpack()));
-                }
-            };
+            Backpack backpack = stack.get(ModDataComponentTypes.BACKPACK.get());
+            if (backpack == null) {
+                backpack = new Backpack();
+                stack.set(ModDataComponentTypes.BACKPACK.get(), backpack);
+            }
+            final Backpack fBackpack = backpack;
+            MenuProvider provider  = new SimpleMenuProvider(
+                    (i, inventory, player) ->
+                            ChestMenu.threeRows(i, inventory, fBackpack),
+                    stack.getHoverName()
+            );
             p.openMenu(provider);
         }
         return super.use(level, p, hand);
